@@ -944,7 +944,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
         "onControlResolveSegmentOfflineMrl", "(Ljava/lang/Object;I)Ljava/lang/String;");
 
     ijkmp_global_init();
-
+    SDL_JNI_init(vm, reserved);
     FFmpegApi_global_init(env);
 
     return JNI_VERSION_1_4;

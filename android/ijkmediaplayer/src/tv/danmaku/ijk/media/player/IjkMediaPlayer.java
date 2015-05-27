@@ -102,10 +102,13 @@ public final class IjkMediaPlayer extends SimpleMediaPlayer {
     public static void loadLibrariesOnce(IjkLibLoader libLoader) {
         synchronized (IjkMediaPlayer.class) {
             if (!mIsLibLoaded) {
+                libLoader.loadLibrary("piliplayer");
+/*
                 libLoader.loadLibrary("ijkffmpeg");
                 libLoader.loadLibrary("ijkutil");
                 libLoader.loadLibrary("ijksdl");
                 libLoader.loadLibrary("ijkplayer");
+*/
                 mIsLibLoaded = true;
             }
         }

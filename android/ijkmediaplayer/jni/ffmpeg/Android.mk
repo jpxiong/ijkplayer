@@ -1,6 +1,25 @@
 LOCAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
+LOCAL_MODULE := libavcodec
+LOCAL_SRC_FILES := $(MY_APP_FFMPEG_OUTPUT_PATH)/libavcodec.a
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := ijkffmpeg
-LOCAL_SRC_FILES := $(MY_APP_FFMPEG_OUTPUT_PATH)/libijkffmpeg.so
-include $(PREBUILT_SHARED_LIBRARY)
+LOCAL_MODULE := libavformat
+LOCAL_SRC_FILES := $(MY_APP_FFMPEG_OUTPUT_PATH)/libavformat.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libavutil
+LOCAL_SRC_FILES := $(MY_APP_FFMPEG_OUTPUT_PATH)/libavutil.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libswresample
+LOCAL_SRC_FILES := $(MY_APP_FFMPEG_OUTPUT_PATH)/libswresample.a
+include $(PREBUILT_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libswscale
+LOCAL_SRC_FILES := $(MY_APP_FFMPEG_OUTPUT_PATH)/libswscale.a
+include $(PREBUILT_STATIC_LIBRARY)

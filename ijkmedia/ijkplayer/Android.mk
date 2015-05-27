@@ -26,7 +26,7 @@ ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 LOCAL_CFLAGS += -mfloat-abi=soft
 endif
 LOCAL_CFLAGS += -std=c99
-LOCAL_LDLIBS += -llog -landroid
+LOCAL_LDLIBS += -llog -landroid -lm -lz
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
 LOCAL_C_INCLUDES += $(realpath $(LOCAL_PATH)/..)
@@ -50,8 +50,8 @@ LOCAL_SRC_FILES += android/ijkplayer_jni.c
 LOCAL_SRC_FILES += android/pipeline/ffpipeline_android.c
 LOCAL_SRC_FILES += android/pipeline/ffpipenode_android_mediacodec_vdec.c
 LOCAL_SRC_FILES += android/pipeline/ffpipenode_android_mediacodec_vout.c
+LOCAL_STATIC_LIBRARIES := ijksdl ijkutil
+LOCAL_STATIC_LIBRARIES += libavformat libavcodec libswresample libswscale libavutil
 
-LOCAL_SHARED_LIBRARIES := ijkffmpeg ijkutil ijksdl
-
-LOCAL_MODULE := ijkplayer
+LOCAL_MODULE := piliplayer
 include $(BUILD_SHARED_LIBRARY)

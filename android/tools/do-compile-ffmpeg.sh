@@ -245,7 +245,6 @@ FF_CFG_FLAGS="$FF_CFG_FLAGS --enable-cross-compile"
 FF_CFG_FLAGS="$FF_CFG_FLAGS --target-os=linux"
 FF_CFG_FLAGS="$FF_CFG_FLAGS --enable-pic"
 # FF_CFG_FLAGS="$FF_CFG_FLAGS --disable-symver"
-
 # Optimization options (experts only):
 FF_CFG_FLAGS="$FF_CFG_FLAGS --enable-asm"
 FF_CFG_FLAGS="$FF_CFG_FLAGS --enable-inline-asm"
@@ -271,52 +270,3 @@ echo "--------------------"
 cp config.* $FF_PREFIX
 make $FF_MAKEFLAGS
 make install
-
-#--------------------
-echo "\n--------------------"
-echo "[*] link ffmpeg"
-echo "--------------------"
-echo $FF_EXTRA_LDFLAGS
-$CC -lm -lz -shared --sysroot=$FF_SYSROOT -Wl,--no-undefined -Wl,-z,noexecstack $FF_EXTRA_LDFLAGS \
-    compat/*.o \
-    libavutil/*.o \
-    libavcodec/*.o \
-    libavformat/*.o \
-    libswresample/*.o \
-    libswscale/*.o \
-    $FF_ASM_OBJ_DIR \
-    $FF_DEP_LIBS \
-    -o $FF_PREFIX/libijkffmpeg.so
-
-mysedi() {
-    f=$1
-    exp=$2
-    n=`basename $f`
-    cp $f /tmp/$n
-    sed $exp /tmp/$n > $f
-    rm /tmp/$n
-}
-
-echo "\n--------------------"
-echo "[*] create files for shared ffmpeg"
-echo "--------------------"
-rm -rf $FF_PREFIX/shared
-mkdir -p $FF_PREFIX/shared/lib/pkgconfig
-ln -s $FF_PREFIX/include $FF_PREFIX/shared/include
-ln -s $FF_PREFIX/libijkffmpeg.so $FF_PREFIX/shared/lib/libijkffmpeg.so
-cp $FF_PREFIX/lib/pkgconfig/*.pc $FF_PREFIX/shared/lib/pkgconfig
-for f in $FF_PREFIX/lib/pkgconfig/*.pc; do
-    # in case empty dir
-    if [ ! -f $f ]; then
-        continue
-    fi
-    cp $f $FF_PREFIX/shared/lib/pkgconfig
-    f=$FF_PREFIX/shared/lib/pkgconfig/`basename $f`
-    # OSX sed doesn't have in-place(-i)
-    mysedi $f 's/\/output/\/output\/shared/g'
-    mysedi $f 's/-lavcodec/-lijkffmpeg/g'
-    mysedi $f 's/-lavformat/-lijkffmpeg/g'
-    mysedi $f 's/-lavutil/-lijkffmpeg/g'
-    mysedi $f 's/-lswresample/-lijkffmpeg/g'
-    mysedi $f 's/-lswscale/-lijkffmpeg/g'
-done

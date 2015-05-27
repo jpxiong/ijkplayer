@@ -62,6 +62,7 @@ void    SDL_JNI_DeleteGlobalRefP(JNIEnv *env, jobject *obj_ptr);
 void    SDL_JNI_DeleteLocalRefP(JNIEnv *env, jobject *obj_ptr);
 
 int     SDL_Android_GetApiLevel();
+jint    SDL_JNI_init(JavaVM *vm, void *reserved);
 
 #define IJK_FIND_JAVA_CLASS(env__, var__, classsign__) \
     do { \

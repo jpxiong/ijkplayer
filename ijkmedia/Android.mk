@@ -16,5 +16,9 @@
 # License along with ijkPlayer; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-LOCAL_PATH := $(call my-dir)
-include $(call all-subdir-makefiles)
+MEDIA_PATH := $(call my-dir)
+include $(MEDIA_PATH)/ijkutil/Android.mk
+include $(MEDIA_PATH)/ijksdl/Android.mk
+include $(MEDIA_PATH)/ijkyuv/Android.mk
+include $(MEDIA_PATH)/ijkplayer/Android.mk
+#include $(call all-subdir-makefiles)

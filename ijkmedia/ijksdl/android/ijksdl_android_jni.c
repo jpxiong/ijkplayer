@@ -166,7 +166,36 @@ int SDL_Android_GetApiLevel()
 #endif
 }
 
+jint SDL_JNI_init(JavaVM *vm, void *reserved) {
+    int retval;
+    JNIEnv* env = NULL;
 
+    g_jvm = vm;
+    if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK) {
+        return -1;
+    }
+
+    retval = ASDK_ArrayList__loadClass(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+    retval = ASDK_Build__loadClass(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+    retval = ASDK_Bundle__loadClass(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+
+    retval = SDL_Android_AudioTrack_global_init(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+
+    retval = ASDK_ByteBuffer__loadClass(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+    retval = SDL_AMediaFormatJava__loadClass(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+    retval = SDL_AMediaCodecJava__loadClass(env);
+    JNI_CHECK_RET(retval == 0, env, NULL, NULL, -1);
+
+    return JNI_VERSION_1_4;
+
+}
+/*
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 {
     int retval;
@@ -200,3 +229,4 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
 }
+*/
