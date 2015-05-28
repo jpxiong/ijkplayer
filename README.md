@@ -112,9 +112,10 @@ git checkout master
 cd android
 # add property ANDROID_NDK to gradle.properties
 
-./gradlew cleanFFmpeg buildJniLibs
+./gradlew cleanFFmpeg buildJniLibs  # generate on single shared library: libpiliplayer.so
 # or import project via Android Studio
 
+./gradlew jarRelease #generate the ijkmediaplayer.jar under the path: ijkmediaplayer/build/libs/
 ```
 
 ### Build iOS
