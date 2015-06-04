@@ -53,5 +53,5 @@ LOCAL_SRC_FILES += android/pipeline/ffpipenode_android_mediacodec_vout.c
 LOCAL_STATIC_LIBRARIES := ijksdl ijkutil
 LOCAL_STATIC_LIBRARIES += libavformat libavcodec libswresample libswscale libavutil
 
-LOCAL_MODULE := piliplayer
+LOCAL_MODULE := pldroidplayer
 include $(BUILD_SHARED_LIBRARY)
