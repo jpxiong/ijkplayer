@@ -2636,12 +2636,13 @@ static int read_thread(void *arg)
         } else {
             av_free_packet(pkt);
         }
-
+#ifdef USE_IJK_BUFERING
         io_tick_counter = SDL_GetTickHR();
         if (abs((int)(io_tick_counter - prev_io_tick_counter)) > BUFFERING_CHECK_PER_MILLISECONDS) {
             prev_io_tick_counter = io_tick_counter;
             ffp_check_buffering_l(ffp);
         }
+#endif
     }
     /* wait until the end */
     while (!is->abort_request) {

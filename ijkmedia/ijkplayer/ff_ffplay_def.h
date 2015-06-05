@@ -30,6 +30,7 @@
 #include "ff_ffmsg_queue.h"
 #include "ff_ffpipenode.h"
 
+#ifdef USE_IJK_BUFERING
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
 
 /*
@@ -46,6 +47,10 @@
 
 #define MAX_QUEUE_SIZE (10 * 1024 * 1024)
 #define MIN_FRAMES 50000
+#else
+#define MAX_QUEUE_SIZE (15 * 1024 * 1024)
+#define MIN_FRAMES 100
+#endif
 
 /* Minimum SDL audio buffer size, in samples. */
 #define SDL_AUDIO_MIN_BUFFER_SIZE 512
@@ -578,13 +583,14 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->auto_play_on_prepared  = 1;
 
     ffp->max_buffer_size                = MAX_QUEUE_SIZE;
+#ifdef USE_IJK_BUFERING
     ffp->high_water_mark_in_bytes       = DEFAULT_HIGH_WATER_MARK_IN_BYTES;
 
     ffp->start_high_water_mark_in_ms    = DEFAULT_START_HIGH_WATER_MARK_IN_MS;
     ffp->next_high_water_mark_in_ms     = DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS;
     ffp->max_high_water_mark_in_ms      = DEFAULT_MAX_HIGH_WATER_MARK_IN_MS;
     ffp->current_high_water_mark_in_ms  = DEFAULT_START_HIGH_WATER_MARK_IN_MS;
-
+#endif
     ffp->playable_duration_ms           = 0;
 
     ffp->pictq_size                     = VIDEO_PICTURE_QUEUE_SIZE_DEFAULT;
