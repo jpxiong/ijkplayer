@@ -2193,8 +2193,11 @@ static int read_thread(void *arg)
     int scan_all_pmts_set = 0;
     int64_t pkt_ts;
     int last_error = 0;
+
+#ifdef USE_IJK_BUFERING
     int64_t prev_io_tick_counter = 0;
     int64_t io_tick_counter = 0;
+#endif
 
     memset(st_index, -1, sizeof(st_index));
     is->last_video_stream = is->video_stream = -1;
