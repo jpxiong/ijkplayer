@@ -310,7 +310,11 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             do {
                 if (d->queue->nb_packets == 0)
                     SDL_CondSignal(d->empty_queue_cond);
+#ifdef USE_IJK_BUFERING
                 if (packet_queue_get_or_buffering(ffp, d->queue, &pkt, &d->pkt_serial, &d->finished) < 0)
+#else
+                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0)
+#endif
                     return -1;
                 if (pkt.data == flush_pkt.data) {
                     avcodec_flush_buffers(d->avctx);
