@@ -59,7 +59,7 @@ LOCAL_SRC_FILES += android/ijksdl_vout_android_nativewindow.c
 LOCAL_SRC_FILES += android/ijksdl_vout_android_surface.c
 LOCAL_SRC_FILES += android/ijksdl_vout_overlay_android_mediacodec.c
 
-LOCAL_STATIC_LIBRARIES := libijkutil libavformat libavcodec libswresample libswscale libavutil
+LOCAL_STATIC_LIBRARIES := libandroid-ndk-profiler libavformat libavcodec libswresample libswscale libavutil
 LOCAL_STATIC_LIBRARIES += cpufeatures yuv_static
 
 LOCAL_MODULE := libijksdl
