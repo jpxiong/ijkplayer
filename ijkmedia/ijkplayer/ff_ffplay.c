@@ -2237,7 +2237,13 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
 
 static int decode_interrupt_cb(void *ctx)
 {
+    int64_t cur_time = av_gettime_relative();
     VideoState *is = ctx;
+    if (is->last_get_avframe_time && (cur_time - is->last_get_avframe_time) >= GET_AVFRAME_TIME_OUT) {
+        av_log(NULL, AV_LOG_INFO, "decode_interrupt_cb timeout\n");
+        is->last_get_avframe_time = cur_time;
+        return (is->abort_request = 1);
+    }
     return is->abort_request;
 }
 
@@ -2276,6 +2282,7 @@ static int read_thread(void *arg)
     int scan_all_pmts_set = 0;
     int64_t pkt_ts;
     int last_error = 0;
+    int audio_read_try_count = 0;
 
 #ifdef USE_IJK_BUFERING
     int64_t prev_io_tick_counter = 0;
@@ -2631,7 +2638,15 @@ static int read_thread(void *arg)
             } else if (ffp->autoexit) {
                 ret = AVERROR_EOF;
                 goto fail;
-            } else {
+            } 
+            else if (!is->audio_st || (is->auddec.finished == 1 && frame_queue_nb_remaining(&is->sampq) == 0)) {
+                av_log(NULL, AV_LOG_INFO, "read_thread tryCount:%d\n", audio_read_try_count);
+                if (audio_read_try_count < 3) {
+                    is->auddec.finished = 0;
+                    audio_read_try_count++;
+                }
+            }
+            else {
                 if (completed) {
                     av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: eof\n");
                     SDL_LockMutex(wait_mutex);
@@ -2659,7 +2674,9 @@ static int read_thread(void *arg)
             }
         }
         pkt->flags = 0;
+        is->last_get_avframe_time = av_gettime_relative();
         ret = av_read_frame(ic, pkt);
+        is->last_get_avframe_time = av_gettime_relative();
         if (ret < 0) {
             if ((ret == AVERROR_EOF || avio_feof(ic->pb)) && !is->eof) {
                 if (is->video_stream >= 0)
@@ -2695,6 +2712,10 @@ static int read_thread(void *arg)
             }
             if (is->eof) {
                 ffp_toggle_buffering(ffp, 0);
+                // notify the message
+                toggle_pause(ffp, 1);
+                av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK; msg:=%s\n", av_err2str(ret));
+                ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
                 SDL_Delay(1000);
             }
             SDL_LockMutex(wait_mutex);

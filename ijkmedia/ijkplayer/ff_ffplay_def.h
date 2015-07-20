@@ -125,6 +125,8 @@
 static int64_t sws_flags = SWS_BICUBIC;
 #endif
 
+static const int64_t GET_AVFRAME_TIME_OUT = 30000000; // 30 * 1000 * 1000
+
 typedef struct MyAVPacketList {
     AVPacket pkt;
     struct MyAVPacketList *next;
@@ -365,6 +367,7 @@ typedef struct VideoState {
     int is_video_high_res; // above 1080p
 
     PacketQueue *buffer_indicator_queue;
+    int64_t last_get_avframe_time;
 } VideoState;
 
 /* options specified by the user */
