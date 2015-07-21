@@ -2639,12 +2639,10 @@ static int read_thread(void *arg)
                 ret = AVERROR_EOF;
                 goto fail;
             } 
-            else if (!is->audio_st || (is->auddec.finished == 1 && frame_queue_nb_remaining(&is->sampq) == 0)) {
-                av_log(NULL, AV_LOG_INFO, "read_thread tryCount:%d\n", audio_read_try_count);
-                if (audio_read_try_count < 3) {
-                    is->auddec.finished = 0;
-                    audio_read_try_count++;
-                }
+            else if (!completed && (audio_read_try_count < 1) && (!is->audio_st || (is->auddec.finished == 1 && frame_queue_nb_remaining(&is->sampq) == 0))) {
+				av_log(NULL, AV_LOG_INFO, "read_thread tryCount:%d\n", audio_read_try_count);
+                is->auddec.finished = 0;
+                audio_read_try_count++;
             }
             else {
                 if (completed) {
@@ -2712,11 +2710,9 @@ static int read_thread(void *arg)
             }
             if (is->eof) {
                 ffp_toggle_buffering(ffp, 0);
-                // notify the message
-                toggle_pause(ffp, 1);
                 av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK; msg:=%s\n", av_err2str(ret));
-                ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
                 SDL_Delay(1000);
+                ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
             }
             SDL_LockMutex(wait_mutex);
             SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
