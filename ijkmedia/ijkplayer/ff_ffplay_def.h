@@ -125,7 +125,8 @@
 static int64_t sws_flags = SWS_BICUBIC;
 #endif
 
-static const int64_t GET_AVFRAME_TIME_OUT = 30000000; // 30 * 1000 * 1000
+#define MAX_GET_AVFRAME_TIME_OUT 30000000 // 30 * 1000 * 1000 us
+#define DEFAULT_GET_AVFRAME_TIME_OUT 10000000
 
 typedef struct MyAVPacketList {
     AVPacket pkt;
@@ -485,6 +486,7 @@ typedef struct FFPlayer {
 #endif
     int loop;
     int framedrop;
+    int64_t get_av_frame_timeout; //us 
     int infinite_buffer;
     enum ShowMode show_mode;
     char *audio_codec_name;
@@ -631,6 +633,7 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
     ffp->start_on_prepared      = 1;
 
     ffp->max_buffer_size                = MAX_QUEUE_SIZE;
+    ffp->get_av_frame_timeout           = DEFAULT_GET_AVFRAME_TIME_OUT;
 #ifdef USE_IJK_BUFERING
     ffp->high_water_mark_in_bytes       = DEFAULT_HIGH_WATER_MARK_IN_BYTES;
 

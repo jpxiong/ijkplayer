@@ -128,6 +128,8 @@ static const AVOption ffp_context_options[] = {
     { "max-buffer-size",                    "max buffer size should be pre-read",
         OPTION_OFFSET(max_buffer_size),     OPTION_INT(MAX_QUEUE_SIZE, 0, MAX_QUEUE_SIZE) },
 
+    { "get-av-frame-timeout",               "the timeout while getting the av frame(us)",
+        OPTION_OFFSET(get_av_frame_timeout),     OPTION_INT(DEFAULT_GET_AVFRAME_TIME_OUT, 1 * 1000 * 1000, MAX_GET_AVFRAME_TIME_OUT) },
     // iOS only options
     { "videotoolbox",                       "VideoToolbox: enable",
         OPTION_OFFSET(videotoolbox),        OPTION_INT(0, 0, 1) },
@@ -2237,9 +2239,11 @@ static void stream_component_close(FFPlayer *ffp, int stream_index)
 
 static int decode_interrupt_cb(void *ctx)
 {
-    int64_t cur_time = av_gettime_relative();
-    VideoState *is = ctx;
-    if (is->last_get_avframe_time && (cur_time - is->last_get_avframe_time) >= GET_AVFRAME_TIME_OUT) {
+    int64_t cur_time = av_gettime_relative(); //us
+    FFPlayer *ffp = ctx;
+    VideoState *is = ffp->is;
+    
+    if (is->last_get_avframe_time && (cur_time - is->last_get_avframe_time) >= ffp->get_av_frame_timeout) {
         av_log(NULL, AV_LOG_INFO, "decode_interrupt_cb timeout\n");
         is->last_get_avframe_time = cur_time;
         return (is->abort_request = 1);
@@ -2304,7 +2308,7 @@ static int read_thread(void *arg)
         goto fail;
     }
     ic->interrupt_callback.callback = decode_interrupt_cb;
-    ic->interrupt_callback.opaque = is;
+    ic->interrupt_callback.opaque = ffp;
     if (!av_dict_get(ffp->format_opts, "scan_all_pmts", NULL, AV_DICT_MATCH_CASE)) {
         av_dict_set(&ffp->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
         scan_all_pmts_set = 1;
