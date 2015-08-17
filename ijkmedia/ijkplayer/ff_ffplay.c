@@ -2277,7 +2277,7 @@ static int read_thread(void *arg)
     int st_index[AVMEDIA_TYPE_NB];
     AVPacket pkt1, *pkt = &pkt1;
     int64_t stream_start_time;
-    int completed = 0;
+//    int completed = 0;
     int pkt_in_play_range = 0;
     AVDictionaryEntry *t;
     AVDictionary **opts;
@@ -2286,7 +2286,7 @@ static int read_thread(void *arg)
     int scan_all_pmts_set = 0;
     int64_t pkt_ts;
     int last_error = 0;
-    int audio_read_try_count = 0;
+//    int audio_read_try_count = 0;
 
 #ifdef USE_IJK_BUFERING
     int64_t prev_io_tick_counter = 0;
@@ -2582,7 +2582,7 @@ static int read_thread(void *arg)
             if (is->paused)
                 step_to_next_frame(is);
 #endif
-            completed = 0;
+//            completed = 0;
             SDL_LockMutex(ffp->is->play_mutex);
             if (ffp->auto_resume) {
                 is->pause_req = 0;
@@ -2634,7 +2634,8 @@ static int read_thread(void *arg)
             SDL_UnlockMutex(wait_mutex);
             continue;
         }
-        if ((!is->paused || completed) &&
+//        if ((!is->paused || completed) &&
+        if ((!is->paused) &&
             (!is->audio_st || (is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0)) &&
             (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
             if (ffp->loop != 1 && (!ffp->loop || --ffp->loop)) {
@@ -2642,7 +2643,8 @@ static int read_thread(void *arg)
             } else if (ffp->autoexit) {
                 ret = AVERROR_EOF;
                 goto fail;
-            } 
+            }
+/* 
             else if (!completed && (audio_read_try_count < 1) && (!is->audio_st || (is->auddec.finished == 1 && frame_queue_nb_remaining(&is->sampq) == 0))) {
 				av_log(NULL, AV_LOG_INFO, "read_thread tryCount:%d\n", audio_read_try_count);
                 is->auddec.finished = 0;
@@ -2674,6 +2676,7 @@ static int read_thread(void *arg)
                     }
                 }
             }
+*/
         }
         pkt->flags = 0;
         is->last_get_avframe_time = av_gettime_relative();
