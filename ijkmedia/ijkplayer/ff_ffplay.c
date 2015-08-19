@@ -2277,7 +2277,7 @@ static int read_thread(void *arg)
     int st_index[AVMEDIA_TYPE_NB];
     AVPacket pkt1, *pkt = &pkt1;
     int64_t stream_start_time;
-//    int completed = 0;
+    int completed = 0;
     int pkt_in_play_range = 0;
     AVDictionaryEntry *t;
     AVDictionary **opts;
@@ -2286,7 +2286,6 @@ static int read_thread(void *arg)
     int scan_all_pmts_set = 0;
     int64_t pkt_ts;
     int last_error = 0;
-//    int audio_read_try_count = 0;
 
 #ifdef USE_IJK_BUFERING
     int64_t prev_io_tick_counter = 0;
@@ -2515,6 +2514,7 @@ static int read_thread(void *arg)
         ffp_notify_msg1(ffp, FFP_REQ_START);
         ffp->auto_resume = 0;
     }
+    bool is_fflags_nobuffer = ic->flags & AVFMT_FLAG_NOBUFFER;
 
     for (;;) {
         if (is->abort_request)
@@ -2582,7 +2582,7 @@ static int read_thread(void *arg)
             if (is->paused)
                 step_to_next_frame(is);
 #endif
-//            completed = 0;
+            completed = 0;
             SDL_LockMutex(ffp->is->play_mutex);
             if (ffp->auto_resume) {
                 is->pause_req = 0;
@@ -2634,8 +2634,10 @@ static int read_thread(void *arg)
             SDL_UnlockMutex(wait_mutex);
             continue;
         }
-//        if ((!is->paused || completed) &&
-        if ((!is->paused) &&
+#ifdef DEBUG
+        av_log(ffp, AV_LOG_INFO, "is->paused=%d, completed=%d, is->auddec.finished=%d,frame_queue_nb_remaining(&is->sampq)=%d,frame_queue_nb_remaining(&is->pictq)=%d, is->eof=%d\n", is->paused, completed,is->auddec.finished, frame_queue_nb_remaining(&is->sampq), frame_queue_nb_remaining(&is->pictq), is->eof);
+#endif
+        if ((!is->paused || completed) &&
             (!is->audio_st || (is->auddec.finished == is->audioq.serial && frame_queue_nb_remaining(&is->sampq) == 0)) &&
             (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
             if (ffp->loop != 1 && (!ffp->loop || --ffp->loop)) {
@@ -2643,14 +2645,7 @@ static int read_thread(void *arg)
             } else if (ffp->autoexit) {
                 ret = AVERROR_EOF;
                 goto fail;
-            }
-/* 
-            else if (!completed && (audio_read_try_count < 1) && (!is->audio_st || (is->auddec.finished == 1 && frame_queue_nb_remaining(&is->sampq) == 0))) {
-				av_log(NULL, AV_LOG_INFO, "read_thread tryCount:%d\n", audio_read_try_count);
-                is->auddec.finished = 0;
-                audio_read_try_count++;
-            }
-            else {
+            } else {
                 if (completed) {
                     av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: eof\n");
                     SDL_LockMutex(wait_mutex);
@@ -2661,22 +2656,26 @@ static int read_thread(void *arg)
                     if (!is->abort_request)
                         continue;
                 } else {
-                    completed = 1;
-                    ffp->auto_resume = 0;
+#ifdef DEBUG
+                    av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: is_fflags_nobuffer=%d,is->eof=%d\n", is_fflags_nobuffer, is->eof);
+#endif
+                    if (!is_fflags_nobuffer || is->eof) {
+                        completed = 1;
+                        ffp->auto_resume = 0;
 
-                    // TODO: 0 it's a bit early to notify complete here
-                    ffp_toggle_buffering(ffp, 0);
-                    toggle_pause(ffp, 1);
-                    if (ffp->error) {
-                        ffp_notify_msg2(ffp, FFP_MSG_ERROR, ffp->error);
-                        av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: error: %d\n", ffp->error);
-                    } else {
-                        av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK\n");
-                        ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
+                        // TODO: 0 it's a bit early to notify complete here
+                        ffp_toggle_buffering(ffp, 0);
+                        toggle_pause(ffp, 1);
+                        if (ffp->error) {
+                            ffp_notify_msg2(ffp, FFP_MSG_ERROR, ffp->error);
+                            av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: error: %d\n", ffp->error);
+                        } else {
+                            av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK\n");
+                            ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
+                        }
                     }
                 }
             }
-*/
         }
         pkt->flags = 0;
         is->last_get_avframe_time = av_gettime_relative();
