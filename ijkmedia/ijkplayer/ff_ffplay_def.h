@@ -65,7 +65,7 @@
 #include "ff_ffmsg_queue.h"
 #include "ff_ffpipenode.h"
 
-#ifdef USE_IJK_BUFERING
+
 #define DEFAULT_HIGH_WATER_MARK_IN_BYTES        (256 * 1024)
 
 /*
@@ -82,10 +82,11 @@
 
 #define MAX_QUEUE_SIZE (15 * 1024 * 1024)
 #define MIN_FRAMES 50000
-#else
-#define MAX_QUEUE_SIZE (15 * 1024 * 1024)
-#define MIN_FRAMES 5
-#endif
+
+// For live streaming begin
+//#define MAX_QUEUE_SIZE_LIVE_STREAMING (15 * 1024 * 1024)
+//#define MIN_FRAMES_LIVE_STREAMING 5  
+// For live streaming end 
 
 /* Minimum SDL audio buffer size, in samples. */
 #define SDL_AUDIO_MIN_BUFFER_SIZE 512
@@ -558,6 +559,7 @@ typedef struct FFPlayer {
 
     int mediacodec;
     int opensles;
+    int live_streaming; // For live streaming
 
     IjkMediaMeta *meta;
 
@@ -634,14 +636,14 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
 
     ffp->max_buffer_size                = MAX_QUEUE_SIZE;
     ffp->get_av_frame_timeout           = DEFAULT_GET_AVFRAME_TIME_OUT;
-#ifdef USE_IJK_BUFERING
+    
     ffp->high_water_mark_in_bytes       = DEFAULT_HIGH_WATER_MARK_IN_BYTES;
 
     ffp->start_high_water_mark_in_ms    = DEFAULT_START_HIGH_WATER_MARK_IN_MS;
     ffp->next_high_water_mark_in_ms     = DEFAULT_NEXT_HIGH_WATER_MARK_IN_MS;
     ffp->max_high_water_mark_in_ms      = DEFAULT_MAX_HIGH_WATER_MARK_IN_MS;
     ffp->current_high_water_mark_in_ms  = DEFAULT_START_HIGH_WATER_MARK_IN_MS;
-#endif
+
     ffp->playable_duration_ms           = 0;
 
     ffp->pictq_size                     = VIDEO_PICTURE_QUEUE_SIZE_DEFAULT; // option
@@ -654,6 +656,8 @@ inline static void ffp_reset_internal(FFPlayer *ffp)
 
     ffp->mediacodec                     = 0; // option
     ffp->opensles                       = 0; // option
+
+    ffp->live_streaming                 = 0; // For live streaming
 
     ffp->format_control_message = NULL;
     ffp->format_control_opaque  = NULL;

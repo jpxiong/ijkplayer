@@ -128,8 +128,13 @@ static const AVOption ffp_context_options[] = {
     { "max-buffer-size",                    "max buffer size should be pre-read",
         OPTION_OFFSET(max_buffer_size),     OPTION_INT(MAX_QUEUE_SIZE, 0, MAX_QUEUE_SIZE) },
 
+    // For live streaming begin
     { "get-av-frame-timeout",               "the timeout while getting the av frame(us)",
         OPTION_OFFSET(get_av_frame_timeout),     OPTION_INT(DEFAULT_GET_AVFRAME_TIME_OUT, 1 * 1000 * 1000, MAX_GET_AVFRAME_TIME_OUT) },
+    { "live-streaming",                     "Live streaming: enable",
+        OPTION_OFFSET(live_streaming),      OPTION_INT(0, 0, 1) },
+    // For live streaming end
+
     // iOS only options
     { "videotoolbox",                       "VideoToolbox: enable",
         OPTION_OFFSET(videotoolbox),        OPTION_INT(0, 0, 1) },
@@ -399,12 +404,17 @@ static int decoder_decode_frame(FFPlayer *ffp, Decoder *d, AVFrame *frame, AVSub
             do {
                 if (d->queue->nb_packets == 0)
                     SDL_CondSignal(d->empty_queue_cond);
-#ifdef USE_IJK_BUFERING
-                if (packet_queue_get_or_buffering(ffp, d->queue, &pkt, &d->pkt_serial, &d->finished) < 0)
-#else
-                if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0)
-#endif
-                    return -1;
+
+                // For live streaming begin
+                if (ffp->live_streaming) {
+                    if (packet_queue_get(d->queue, &pkt, 1, &d->pkt_serial) < 0)
+                        return -1;
+                } else {
+                    if (packet_queue_get_or_buffering(ffp, d->queue, &pkt, &d->pkt_serial, &d->finished) < 0)
+                        return -1;
+                }
+                // For live streaming end
+
                 if (pkt.data == flush_pkt.data) {
                     avcodec_flush_buffers(d->avctx);
                     d->finished = 0;
@@ -2243,11 +2253,14 @@ static int decode_interrupt_cb(void *ctx)
     FFPlayer *ffp = ctx;
     VideoState *is = ffp->is;
     
-    if (is->last_get_avframe_time && (cur_time - is->last_get_avframe_time) >= ffp->get_av_frame_timeout) {
+    // For live streaming begin
+    if (ffp->live_streaming && is->last_get_avframe_time && (cur_time - is->last_get_avframe_time) >= ffp->get_av_frame_timeout) {
         av_log(NULL, AV_LOG_INFO, "decode_interrupt_cb timeout\n");
         is->last_get_avframe_time = cur_time;
         return (is->abort_request = 1);
     }
+    // For live streaming end
+
     return is->abort_request;
 }
 
@@ -2287,10 +2300,8 @@ static int read_thread(void *arg)
     int64_t pkt_ts;
     int last_error = 0;
 
-#ifdef USE_IJK_BUFERING
     int64_t prev_io_tick_counter = 0;
     int64_t io_tick_counter = 0;
-#endif
 
     memset(st_index, -1, sizeof(st_index));
     is->last_video_stream = is->video_stream = -1;
@@ -2718,7 +2729,11 @@ static int read_thread(void *arg)
                 ffp_toggle_buffering(ffp, 0);
                 av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK; msg:=%s\n", av_err2str(ret));
                 SDL_Delay(1000);
-                ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
+                // For live streaming begin
+                if (ffp->live_streaming) {
+                    ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
+                }
+                // For live streaming end
             }
             SDL_LockMutex(wait_mutex);
             SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);
@@ -2747,13 +2762,16 @@ static int read_thread(void *arg)
         } else {
             av_free_packet(pkt);
         }
-#ifdef USE_IJK_BUFERING
-        io_tick_counter = SDL_GetTickHR();
-        if (abs((int)(io_tick_counter - prev_io_tick_counter)) > BUFFERING_CHECK_PER_MILLISECONDS) {
-            prev_io_tick_counter = io_tick_counter;
-            ffp_check_buffering_l(ffp);
+
+        // For live streaming begin
+        if (!ffp->live_streaming) {
+            io_tick_counter = SDL_GetTickHR();
+            if (abs((int)(io_tick_counter - prev_io_tick_counter)) > BUFFERING_CHECK_PER_MILLISECONDS) {
+                prev_io_tick_counter = io_tick_counter;
+                ffp_check_buffering_l(ffp);
+            }
         }
-#endif
+        // For live streaming end
     }
     /* wait until the end */
     while (!is->abort_request) {
@@ -3381,7 +3399,6 @@ long ffp_get_playable_duration_l(FFPlayer *ffp)
     assert(ffp);
     if (!ffp)
         return 0;
-
     return (long)ffp->playable_duration_ms;
 }
 

@@ -192,7 +192,7 @@ LABEL_RETURN:
 }
 
 static void
-IjkMediaPlayer_seekTo(JNIEnv *env, jobject thiz, int msec)
+IjkMediaPlayer_seekTo(JNIEnv *env, jobject thiz, jint msec)
 {
     MPTRACE("%s\n", __func__);
     IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
@@ -224,7 +224,6 @@ IjkMediaPlayer_getCurrentPosition(JNIEnv *env, jobject thiz)
     int retval = 0;
     IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
     JNI_CHECK_GOTO(mp, env, NULL, "mpjni: getCurrentPosition: null mp", LABEL_RETURN);
-
     retval = ijkmp_get_current_position(mp);
 
 LABEL_RETURN:
@@ -232,15 +231,14 @@ LABEL_RETURN:
     return retval;
 }
 
-static int
+static jlong
 IjkMediaPlayer_getDuration(JNIEnv *env, jobject thiz)
 {
-    int retval = 0;
+    jlong retval = 0;
     IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
     JNI_CHECK_GOTO(mp, env, NULL, "mpjni: getDuration: null mp", LABEL_RETURN);
-
-    retval = ijkmp_get_duration(mp);
-
+    retval = (jlong)ijkmp_get_duration(mp);
+    MPTRACE("%s retval=%lld\n", __func__, retval);
 LABEL_RETURN:
     ijkmp_dec_ref_p(&mp);
     return retval;
