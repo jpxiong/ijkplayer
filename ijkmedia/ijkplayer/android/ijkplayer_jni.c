@@ -238,7 +238,6 @@ IjkMediaPlayer_getDuration(JNIEnv *env, jobject thiz)
     IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
     JNI_CHECK_GOTO(mp, env, NULL, "mpjni: getDuration: null mp", LABEL_RETURN);
     retval = (jlong)ijkmp_get_duration(mp);
-    MPTRACE("%s retval=%lld\n", __func__, retval);
 LABEL_RETURN:
     ijkmp_dec_ref_p(&mp);
     return retval;
