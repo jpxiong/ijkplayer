@@ -2525,7 +2525,7 @@ static int read_thread(void *arg)
         ffp_notify_msg1(ffp, FFP_REQ_START);
         ffp->auto_resume = 0;
     }
-    bool is_fflags_nobuffer = ic->flags & AVFMT_FLAG_NOBUFFER;
+    //bool is_fflags_nobuffer = ic->flags & AVFMT_FLAG_NOBUFFER;
 
     for (;;) {
         if (is->abort_request)
@@ -2670,7 +2670,7 @@ static int read_thread(void *arg)
 #ifdef DEBUG
                     av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: is_fflags_nobuffer=%d,is->eof=%d\n", is_fflags_nobuffer, is->eof);
 #endif
-                    if (!is_fflags_nobuffer || is->eof) {
+                    if (!ffp->live_streaming || is->eof) { // For live streaming
                         completed = 1;
                         ffp->auto_resume = 0;
 
@@ -2727,10 +2727,10 @@ static int read_thread(void *arg)
             }
             if (is->eof) {
                 ffp_toggle_buffering(ffp, 0);
-                av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK; msg:=%s\n", av_err2str(ret));
                 SDL_Delay(1000);
                 // For live streaming begin
-                if (ffp->live_streaming) {
+                if (ffp->live_streaming && completed) {
+                    av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK; msg:=%s\n", av_err2str(ret));
                     ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
                 }
                 // For live streaming end
