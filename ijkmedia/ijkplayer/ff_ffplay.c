@@ -2729,7 +2729,7 @@ static int read_thread(void *arg)
                 ffp_toggle_buffering(ffp, 0);
                 SDL_Delay(1000);
                 // For live streaming begin
-                if (ffp->live_streaming && completed) {
+                if (ffp->live_streaming && is->abort_request) {
                     av_log(ffp, AV_LOG_INFO, "ffp_toggle_buffering: completed: OK; msg:=%s\n", av_err2str(ret));
                     ffp_notify_msg1(ffp, FFP_MSG_COMPLETED);
                 }
