@@ -73,9 +73,13 @@
 #import "IJKMediaModule.h"
 #import "IJKMediaUtils.h"
 #import "IJKKVOController.h"
+#include "ijksdl/ios/ijksdl_ios.h"
 
 // avoid float equal compare
-static const float kMinPlayingRate          = 0.00001f;
+inline static bool isFloatZero(float value)
+{
+    return fabsf(value) <= 0.00001f;
+}
 
 // resume play after stall
 static const float kMaxHighWaterMarkMilli   = 15 * 1000;
@@ -122,7 +126,8 @@ static void *KVO_AVPlayerItem_playbackBufferEmpty       = &KVO_AVPlayerItem_play
     // while AVPlayer is prerolling, it could resume itself.
     // foring start could
     BOOL _isPrerolling;
-    
+
+    NSTimeInterval _seekingTime;
     BOOL _isSeeking;
     BOOL _isError;
     BOOL _isCompleted;
@@ -137,6 +142,8 @@ static void *KVO_AVPlayerItem_playbackBufferEmpty       = &KVO_AVPlayerItem_play
     BOOL _playingBeforeInterruption;
     
     NSMutableArray *_registeredNotifications;
+
+    float _playbackRate;
 }
 
 @synthesize view                        = _view;
@@ -183,6 +190,8 @@ static IJKAVMoviePlayerController* instance;
         _playbackLikelyToKeeyUp = NO;
         _playbackBufferEmpty    = YES;
         _playbackBufferFull     = NO;
+
+        _playbackRate           = 1.0f;
 
         // init extra
         [self setScreenOn:YES];
@@ -272,7 +281,7 @@ static IJKAVMoviePlayerController* instance;
 
 - (BOOL)isPlaying
 {
-    if (_player.rate >= kMinPlayingRate) {
+    if (!isFloatZero(_player.rate)) {
         return YES;
     } else {
         if (_isPrerolling) {
@@ -323,14 +332,15 @@ static IJKAVMoviePlayerController* instance;
 {
     if (!_player)
         return;
-    
+
+    _seekingTime = aCurrentPlaybackTime;
     _isSeeking = YES;
     [self didPlaybackStateChange];
     [self didLoadStateChange];
     if (_isPrerolling) {
         [_player pause];
     }
-    
+
     [_player seekToTime:CMTimeMakeWithSeconds(aCurrentPlaybackTime, NSEC_PER_SEC)
       completionHandler:^(BOOL finished) {
           dispatch_async(dispatch_get_main_queue(), ^{
@@ -348,7 +358,10 @@ static IJKAVMoviePlayerController* instance;
 {
     if (!_player)
         return 0.0f;
-    
+
+    if (_isSeeking)
+        return _seekingTime;
+
     return CMTimeGetSeconds([_player currentTime]);
 }
 
@@ -399,17 +412,17 @@ static IJKAVMoviePlayerController* instance;
     if (playerItem == nil)
         return MPMovieLoadStateUnknown;
     
-    if (_player != nil && _player.rate > kMinPlayingRate) {
-        NSLog(@"loadState: playing");
+    if (_player != nil && !isFloatZero(_player.rate)) {
+        // NSLog(@"loadState: playing");
         return MPMovieLoadStatePlayable | MPMovieLoadStatePlaythroughOK;
     } else if ([playerItem isPlaybackBufferFull]) {
-        NSLog(@"loadState: isPlaybackBufferFull");
+        // NSLog(@"loadState: isPlaybackBufferFull");
         return MPMovieLoadStatePlayable | MPMovieLoadStatePlaythroughOK;
     } else if ([playerItem isPlaybackLikelyToKeepUp]) {
-        NSLog(@"loadState: isPlaybackLikelyToKeepUp");
+        // NSLog(@"loadState: isPlaybackLikelyToKeepUp");
         return MPMovieLoadStatePlayable | MPMovieLoadStatePlaythroughOK;
     } else if ([playerItem isPlaybackBufferEmpty]) {
-        NSLog(@"loadState: isPlaybackBufferEmpty");
+        // NSLog(@"loadState: isPlaybackBufferEmpty");
         return MPMovieLoadStateStalled;
     } else {
         NSLog(@"loadState: unknown");
@@ -417,7 +430,18 @@ static IJKAVMoviePlayerController* instance;
     }
 }
 
+-(void)setPlaybackRate:(float)playbackRate
+{
+    _playbackRate = playbackRate;
+    if (_player != nil && !isFloatZero(_player.rate)) {
+        _player.rate = _playbackRate;
+    }
+}
 
+-(float)playbackRate
+{
+    return _playbackRate;
+}
 
 
 - (void)didPrepareToPlayAsset:(AVURLAsset *)asset withKeys:(NSArray *)requestedKeys
@@ -597,7 +621,7 @@ static IJKAVMoviePlayerController* instance;
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (self.bufferingProgress > 100) {
                     if ([self isPlaying]) {
-                        _player.rate = 1.0f;
+                        _player.rate = _playbackRate;
                     }
                 }
             });
@@ -713,6 +737,9 @@ static IJKAVMoviePlayerController* instance;
                 [[NSNotificationCenter defaultCenter]
                  postNotificationName:IJKMediaPlaybackIsPreparedToPlayDidChangeNotification
                  object:self];
+
+                if (_shouldAutoplay)
+                    [_player play];
             }
                 break;
                 
@@ -782,7 +809,7 @@ static IJKAVMoviePlayerController* instance;
     }
     else if (context == KVO_AVPlayer_rate)
     {
-        if (_player != nil && _player.rate >= kMinPlayingRate)
+        if (_player != nil && !isFloatZero(_player.rate))
             _isPrerolling = NO;
         /* AVPlayer "rate" property value observer. */
         [self didPlaybackStateChange];
@@ -889,22 +916,33 @@ static IJKAVMoviePlayerController* instance;
 {
     if (!_player)
         return NO;
-    return [_player allowsAirPlayVideo];
+    return _player.allowsExternalPlayback;
 }
 
 -(void)setAllowsMediaAirPlay:(BOOL)b
 {
     if (!_player)
         return;
-    [_player setAllowsAirPlayVideo:b];
+    _player.allowsExternalPlayback = b;
 }
 
 -(BOOL)airPlayMediaActive
 {
     if (!_player)
         return NO;
-    
-    return _player.airPlayVideoActive || self.isDanmakuMediaAirPlay;
+    return _player.externalPlaybackActive || self.isDanmakuMediaAirPlay;
+}
+
+- (CGSize)naturalSize
+{
+    if (_playAsset == nil)
+        return CGSizeZero;
+
+    NSArray<AVAssetTrack *> *videoTracks = [_playAsset tracksWithMediaType:AVMediaTypeVideo];
+    if (videoTracks == nil || videoTracks.count <= 0)
+        return CGSizeZero;
+
+    return [videoTracks objectAtIndex:0].naturalSize;
 }
 
 - (void)setScalingMode: (MPMovieScalingMode) aScalingMode
@@ -1000,6 +1038,13 @@ static IJKAVMoviePlayerController* instance;
     } else {
         if (![self airPlayMediaActive]) {
             [_avView setPlayer:nil];
+            if (isIOS9OrLater()) {
+                if ([self isPlaying]) {
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                        [self play];
+                    });
+                }
+            }
         }
     }
 }

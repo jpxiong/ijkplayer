@@ -41,13 +41,13 @@ typedef enum IJKAVDiscard {
     IJK_AVDISCARD_ALL     = 48, ///< discard all
 } IJKAVDiscard;
 
-typedef struct IjkMediaPlayer IjkMediaPlayer;
+struct IjkMediaPlayer;
 
 @interface IJKFFOptions : NSObject
 
 +(IJKFFOptions *)optionsByDefault;
 
--(void)applyTo:(IjkMediaPlayer *)mediaPlayer;
+-(void)applyTo:(struct IjkMediaPlayer *)mediaPlayer;
 
 - (void)setOptionValue:(NSString *)value
                 forKey:(NSString *)key
@@ -68,18 +68,6 @@ typedef struct IjkMediaPlayer IjkMediaPlayer;
 -(void)setSwsOptionIntValue:       (int64_t)value forKey:(NSString *)key;
 -(void)setPlayerOptionIntValue:    (int64_t)value forKey:(NSString *)key;
 
--(void)setMaxFps:(int)value;
--(void)setFrameDrop:(int)value;
--(void)setVideoPictureSize:(int)value;
--(void)setVideoToolboxEnabled:(BOOL)value;
--(void)setVideoToolboxMaxFrameWidth:(int)value;
-
--(void)setReconnect:(int)value;
--(void)setTimeout:(int64_t)value;
--(void)setUserAgent:(NSString *)value;
-
--(void)setSkipLoopFilter:(IJKAVDiscard)value;
--(void)setSkipFrame:(IJKAVDiscard)value;
-
+@property(nonatomic) BOOL useRenderQueue;
 
 @end

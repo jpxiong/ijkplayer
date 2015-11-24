@@ -53,12 +53,15 @@
 @property(nonatomic, readonly) int64_t numberOfBytesTransferred;
 
 @property(nonatomic) MPMovieControlStyle controlStyle;
+@property(nonatomic, readonly) CGSize naturalSize;
 @property(nonatomic) MPMovieScalingMode scalingMode;
 @property(nonatomic) BOOL shouldAutoplay;
 
 @property (nonatomic) BOOL allowsMediaAirPlay;
 @property (nonatomic) BOOL isDanmakuMediaAirPlay;
 @property (nonatomic, readonly) BOOL airPlayMediaActive;
+
+@property (nonatomic) float playbackRate;
 
 - (UIImage *)thumbnailImageAtCurrentTime;
 
@@ -75,9 +78,13 @@ IJK_EXTERN NSString *const IJKMediaPlaybackIsPreparedToPlayDidChangeNotification
 IJK_EXTERN NSString *const IJKMoviePlayerLoadStateDidChangeNotification;
 IJK_EXTERN NSString *const IJKMoviePlayerPlaybackDidFinishNotification;
 IJK_EXTERN NSString *const IJKMoviePlayerPlaybackStateDidChangeNotification;
+IJK_EXTERN NSString *const IJKMoviePlayerVideoSizeChangeNotification;
 
 IJK_EXTERN NSString *const IJKMoviePlayerIsAirPlayVideoActiveDidChangeNotification;
 IJK_EXTERN NSString *const IJKMoviePlayerVideoDecoderOpenNotification;
+
+IJK_EXTERN NSString *const IJKMoviePlayerFirstVideoFrameRenderedNotification;
+IJK_EXTERN NSString *const IJKMoviePlayerFirstAudioFrameRenderedNotification;
 @end
 
 #pragma mark IJKMediaResource
@@ -86,4 +93,30 @@ IJK_EXTERN NSString *const IJKMoviePlayerVideoDecoderOpenNotification;
 
 - (NSString *)urlOfSegment:(int)segmentPosition;
 
+@end
+
+#pragma mark IJKMediaIoDelegate
+
+/**
+ * called before tcp connection
+ *
+ * @return
+ *      original url:   continue connect.
+ *      nil:            disconnect.
+ *      new url:        use new url to connect.
+ */
+@protocol IJKMediaTcpOpenDelegate <NSObject>
+- (NSString *)onTcpOpen:(int)streamIndex url:(NSString *)url;
+@end
+
+@protocol IJKMediaHttpOpenDelegate <NSObject>
+- (NSString *)onHttpOpen:(int)streamIndex url:(NSString *)url;
+@end
+
+@protocol IJKMediaHttpRetryDelegate <NSObject>
+- (NSString *)onHttpRetry:(int)streamIndex url:(NSString *)url retryCount:(int)retryCount;
+@end
+
+@protocol IJKMediaLiveRetryDelegate <NSObject>
+- (NSString *)onLiveRetry:(int)streamIndex url:(NSString *)url retryCount:(int)retryCount;
 @end

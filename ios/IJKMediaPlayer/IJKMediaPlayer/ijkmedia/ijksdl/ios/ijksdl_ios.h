@@ -21,10 +21,9 @@
  */
 
 #include "ijksdl/ijksdl.h"
-
 #include "ijksdl_aout_ios_audiounit.h"
-
 #include "ijksdl_vout_ios_gles2.h"
+#import <UIKit/UIKit.h>
 
 
 
@@ -33,6 +32,16 @@
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 #define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 #define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
+
+inline static BOOL isIOS9OrLater()
+{
+    return SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"9.0");
+}
+
+inline static BOOL isIOS8OrLater()
+{
+    return SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"8.0");
+}
 
 inline static BOOL isIOS7OrLater()
 {

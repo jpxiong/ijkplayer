@@ -202,12 +202,24 @@ AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
     return opts;
 }
 
-// MERGE: grow_array
-// MERGE: print_device_sources
-// MERGE: print_device_sinks
-// MERGE: show_sinks_sources_parse_arg
-// MERGE: show_sources
-// MERGE: show_sinks
+void *grow_array(void *array, int elem_size, int *size, int new_size)
+{
+    if (new_size >= INT_MAX / elem_size) {
+        av_log(NULL, AV_LOG_ERROR, "Array too big.\n");
+        return NULL;
+    }
+    if (*size < new_size) {
+        uint8_t *tmp = av_realloc_array(array, new_size, elem_size);
+        if (!tmp) {
+            av_log(NULL, AV_LOG_ERROR, "Could not alloc buffer.\n");
+            return NULL;
+        }
+        memset(tmp + *size*elem_size, 0, (new_size-*size) * elem_size);
+        *size = new_size;
+        return tmp;
+    }
+    return array;
+}
 
 double get_rotation(AVStream *st)
 {
@@ -223,9 +235,15 @@ double get_rotation(AVStream *st)
             theta = 0;
     }
     if (displaymatrix && !theta)
-        theta = av_display_rotation_get((int32_t*) displaymatrix);
+        theta = -av_display_rotation_get((int32_t*) displaymatrix);
 
     theta -= 360*floor(theta/360 + 0.9/360);
+
+    if (fabs(theta - 90*round(theta/90)) > 2)
+        av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
+               "If you want to help, upload a sample "
+               "of this file to ftp://upload.ffmpeg.org/incoming/ "
+               "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
 
     return theta;
 }

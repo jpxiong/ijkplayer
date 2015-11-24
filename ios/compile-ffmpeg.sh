@@ -39,7 +39,7 @@ echo_archs() {
     echo "FF_ALL_ARCHS = $FF_ALL_ARCHS"
 }
 
-FF_LIBS="libavcodec libavformat libavutil libswscale libswresample"
+FF_LIBS="libavcodec libavfilter libavformat libavutil libswscale libswresample"
 do_lipo_ffmpeg () {
     LIB_FILE=$1
     LIPO_FLAGS=
@@ -85,12 +85,33 @@ do_lipo_all () {
         do_lipo_ffmpeg "$FF_LIB.a";
     done
 
+    ANY_ARCH=
+    for ARCH in $FF_ALL_ARCHS
+    do
+        ARCH_INC_DIR="$UNI_BUILD_ROOT/build/ffmpeg-$ARCH/output/include"
+        if [ -d "$ARCH_INC_DIR" ]; then
+            if [ -z "$ANY_ARCH" ]; then
+                ANY_ARCH=$ARCH
+                cp -R "$ARCH_INC_DIR" "$UNI_BUILD_ROOT/build/universal/"
+            fi
+
+            UNI_INC_DIR="$UNI_BUILD_ROOT/build/universal/include"
+
+            mkdir -p "$UNI_INC_DIR/libavutil/$ARCH"
+            cp -f "$ARCH_INC_DIR/libavutil/avconfig.h"  "$UNI_INC_DIR/libavutil/$ARCH/avconfig.h"
+            cp -f tools/avconfig.h                      "$UNI_INC_DIR/libavutil/avconfig.h"
+            cp -f "$ARCH_INC_DIR/libavutil/ffversion.h" "$UNI_INC_DIR/libavutil/$ARCH/ffversion.h"
+            cp -f tools/ffversion.h                     "$UNI_INC_DIR/libavutil/ffversion.h"
+            mkdir -p "$UNI_INC_DIR/libffmpeg/$ARCH"
+            cp -f "$ARCH_INC_DIR/libffmpeg/config.h"    "$UNI_INC_DIR/libffmpeg/$ARCH/config.h"
+            cp -f tools/config.h                        "$UNI_INC_DIR/libffmpeg/config.h"
+        fi
+    done
+
     for SSL_LIB in $SSL_LIBS
     do
         do_lipo_ssl "$SSL_LIB.a";
     done
-
-    cp -R $UNI_BUILD_ROOT/build/ffmpeg-armv7/output/include $UNI_BUILD_ROOT/build/universal/
 }
 
 #----------
@@ -123,6 +144,8 @@ elif [ "$FF_TARGET" = "clean" ]; then
     done
     rm -rf build/ffmpeg-*
     rm -rf build/openssl-*
+    rm -rf build/universal/include
+    rm -rf build/universal/lib
 else
     echo "Usage:"
     echo "  compile-ffmpeg.sh armv7|arm64|i386|x86_64"

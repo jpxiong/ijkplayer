@@ -36,6 +36,7 @@
 @dynamic loadState;
 
 @dynamic controlStyle;
+@dynamic naturalSize;
 @dynamic scalingMode;
 @dynamic shouldAutoplay;
 @synthesize isDanmakuMediaAirPlay = _isDanmakuMediaAirPlay;
@@ -50,8 +51,7 @@
         self.scalingMode = MPMovieScalingModeAspectFit;
         self.shouldAutoplay = YES;
         [self IJK_installMovieNotificationObservers];
-        
-        self.useApplicationAudioSession = YES;
+
         [[IJKAudioKit sharedInstance] setupAudioSession];
         
         _bufferingProgress = -1;
@@ -109,7 +109,10 @@
 
 - (UIImage *)thumbnailImageAtCurrentTime
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     return [super thumbnailImageAtTime:self.currentPlaybackTime timeOption:MPMovieTimeOptionExact];
+#pragma clang diagnostic pop
 }
 
 -(BOOL)allowsMediaAirPlay
@@ -143,6 +146,16 @@
 {
     _isDanmakuMediaAirPlay = isDanmakuMediaAirPlay;
     [[NSNotificationCenter defaultCenter] postNotificationName:IJKMoviePlayerIsAirPlayVideoActiveDidChangeNotification object:nil userInfo:nil];
+}
+
+-(void)setPlaybackRate:(float)playbackRate
+{
+    NSLog(@"[MPMoviePlayerController setPlaybackRate] is not supported\n");
+}
+
+-(float)playbackRate
+{
+    return 1.0f;
 }
 
 #pragma mark Movie Notification Handlers

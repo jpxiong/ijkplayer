@@ -60,6 +60,8 @@ typedef struct SDL_Aout_Opaque {
 
     SDL_Thread *audio_tid;
     SDL_Thread _audio_tid;
+
+    int audio_session_id;
 } SDL_Aout_Opaque;
 
 static int aout_thread_n(JNIEnv *env, SDL_Aout *aout)
@@ -109,7 +111,7 @@ static int aout_thread_n(JNIEnv *env, SDL_Aout *aout)
             opaque->need_flush = 0;
             SDL_Android_AudioTrack_flush(env, atrack);
         } else {
-            int written = SDL_Android_AudioTrack_write_byte(env, atrack, buffer, copy_size);
+            int written = SDL_Android_AudioTrack_write(env, atrack, buffer, copy_size);
             if (written != copy_size) {
                 ALOGW("AudioTrack: not all data copied %d/%d", (int)written, (int)copy_size);
             }
@@ -168,6 +170,9 @@ static int aout_open_audio_n(JNIEnv *env, SDL_Aout *aout, const SDL_AudioSpec *d
         SDL_Android_AudioTrack_get_target_spec(opaque->atrack, obtained);
         SDLTRACE("audio target format fmt:0x%x, channel:0x%x", (int)obtained->format, (int)obtained->channels);
     }
+
+    opaque->audio_session_id = SDL_Android_AudioTrack_getAudioSessionId(env, opaque->atrack);
+    ALOGI("audio_session_id = %d\n", opaque->audio_session_id);
 
     opaque->pause_on = 1;
     opaque->abort_request = 0;
@@ -242,6 +247,13 @@ static void aout_close_audio(SDL_Aout *aout)
     opaque->audio_tid = NULL;
 }
 
+static int aout_get_audio_session_id(SDL_Aout *aout)
+{
+    SDL_Aout_Opaque *opaque = aout->opaque;
+
+    return opaque->audio_session_id;
+}
+
 static void aout_free_l(SDL_Aout *aout)
 {
     if (!aout)
@@ -279,6 +291,7 @@ SDL_Aout *SDL_AoutAndroid_CreateForAudioTrack()
     aout->flush_audio  = aout_flush_audio;
     aout->set_volume   = aout_set_volume;
     aout->close_audio  = aout_close_audio;
+    aout->func_get_audio_session_id = aout_get_audio_session_id;
 
     return aout;
 }

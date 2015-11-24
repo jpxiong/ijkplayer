@@ -22,15 +22,14 @@
 
 #include "ffpipeline_ios.h"
 #include "ffpipenode_ios_videotoolbox_vdec.h"
-#include "ffpipenode_ios_videotoolbox_vout.h"
 #include "ffpipenode_ffplay_vdec.h"
 #include "ff_ffplay.h"
 #import "ijksdl/ios/ijksdl_aout_ios_audiounit.h"
 
-typedef struct IJKFF_Pipeline_Opaque {
+struct IJKFF_Pipeline_Opaque {
     FFPlayer    *ffp;
     bool         is_videotoolbox_open;
-} IJKFF_Pipeline_Opaque;
+};
 
 static void func_destroy(IJKFF_Pipeline *pipeline)
 {
@@ -54,11 +53,6 @@ static IJKFF_Pipenode *func_open_video_decoder(IJKFF_Pipeline *pipeline, FFPlaye
     return node;
 }
 
-static IJKFF_Pipenode *func_open_video_output(IJKFF_Pipeline *pipeline, FFPlayer *ffp)
-{
-    return ffpipenode_create_video_output_from_ios_videotoolbox(ffp);
-}
-
 static SDL_Aout *func_open_audio_output(IJKFF_Pipeline *pipeline, FFPlayer *ffp)
 {
     return SDL_AoutIos_CreateForAudioUnit();
@@ -78,11 +72,7 @@ IJKFF_Pipeline *ffpipeline_create_from_ios(FFPlayer *ffp)
     opaque->ffp                       = ffp;
     pipeline->func_destroy            = func_destroy;
     pipeline->func_open_video_decoder = func_open_video_decoder;
-    pipeline->func_open_video_output  = func_open_video_output;
     pipeline->func_open_audio_output  = func_open_audio_output;
 
     return pipeline;
-fail:
-    ffpipeline_free_p(&pipeline);
-    return NULL;
 }
