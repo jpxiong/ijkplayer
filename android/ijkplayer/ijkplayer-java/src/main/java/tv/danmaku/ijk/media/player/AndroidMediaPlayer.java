@@ -150,6 +150,7 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer {
         return mDataSource;
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
     private void releaseMediaDataSource() {
         if (mMediaDataSource != null) {
             try {

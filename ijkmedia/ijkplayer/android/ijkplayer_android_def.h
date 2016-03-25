@@ -38,7 +38,7 @@ enum media_event_type {
     MEDIA_TIMED_TEXT        = 99,       // not supported yet
     MEDIA_ERROR             = 100,      // arg1, arg2
     MEDIA_INFO              = 200,      // arg1, arg2
-
+    MEDIA_BUFFERING_BYTES_UPDATE = 503, // arg1 = cached data in bytes, arg2 = high water mark 
 
     MEDIA_SET_VIDEO_SAR     = 10001,    // arg1 = sar.num, arg2 = sar.den
 };

@@ -814,6 +814,7 @@ static void message_loop_n(JNIEnv *env, IjkMediaPlayer *mp)
             post_event(env, weak_thiz, MEDIA_BUFFERING_UPDATE, msg.arg1, msg.arg2);
             break;
         case FFP_MSG_BUFFERING_BYTES_UPDATE:
+            post_event(env, weak_thiz, MEDIA_BUFFERING_BYTES_UPDATE, msg.arg1, msg.arg2);
             break;
         case FFP_MSG_BUFFERING_TIME_UPDATE:
             break;

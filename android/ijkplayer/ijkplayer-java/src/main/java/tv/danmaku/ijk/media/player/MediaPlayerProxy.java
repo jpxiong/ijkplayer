@@ -222,6 +222,21 @@ public class MediaPlayerProxy implements IMediaPlayer {
     }
 
     @Override
+    public void setOnBufferingBytesUpdateListener(OnBufferingBytesUpdateListener listener) {
+        if (listener != null) {
+            final OnBufferingBytesUpdateListener finalListener = listener;
+            mBackEndMediaPlayer.setOnBufferingBytesUpdateListener(new OnBufferingBytesUpdateListener() {
+                @Override
+                public void onBufferingBytesUpdate(IMediaPlayer mp, int nbytes) {
+                    finalListener.onBufferingBytesUpdate(MediaPlayerProxy.this,nbytes);
+                }
+            });
+        } else {
+            mBackEndMediaPlayer.setOnBufferingBytesUpdateListener(null);
+        }
+    }
+
+    @Override
     public void setOnSeekCompleteListener(OnSeekCompleteListener listener) {
         if (listener != null) {
             final OnSeekCompleteListener finalListener = listener;

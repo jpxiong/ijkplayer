@@ -48,6 +48,8 @@ public interface IMediaPlayer {
     int MEDIA_INFO_UNSUPPORTED_SUBTITLE = 901;
     int MEDIA_INFO_SUBTITLE_TIMED_OUT = 902;
 
+    int MEDIA_INFO_UFFERING_BYTES_UPDATE = 503;
+
     int MEDIA_INFO_VIDEO_ROTATION_CHANGED = 10001;
     int MEDIA_INFO_AUDIO_RENDERING_START = 10002;
 
@@ -121,6 +123,9 @@ public interface IMediaPlayer {
     void setOnBufferingUpdateListener(
             OnBufferingUpdateListener listener);
 
+    void setOnBufferingBytesUpdateListener(
+            OnBufferingBytesUpdateListener listener);
+
     void setOnSeekCompleteListener(
             OnSeekCompleteListener listener);
 
@@ -144,6 +149,10 @@ public interface IMediaPlayer {
 
     interface OnBufferingUpdateListener {
         void onBufferingUpdate(IMediaPlayer mp, int percent);
+    }
+
+    interface OnBufferingBytesUpdateListener {
+        void onBufferingBytesUpdate(IMediaPlayer mp, int nbytes);
     }
 
     interface OnSeekCompleteListener {
