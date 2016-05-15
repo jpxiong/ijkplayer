@@ -74,6 +74,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     private static final int MEDIA_TIMED_TEXT = 99;
     private static final int MEDIA_ERROR = 100;
     private static final int MEDIA_INFO = 200;
+    private static final int MEDIA_BUFFERING_BYTES_UPDATE = 503;
 
     protected static final int MEDIA_SET_VIDEO_SAR = 10001;
 
@@ -825,6 +826,10 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
 
                 // DebugLog.efmt(TAG, "Buffer (%d%%) %d/%d",  percent, bufferPosition, duration);
                 player.notifyOnBufferingUpdate((int)percent);
+                return;
+
+            case MEDIA_BUFFERING_BYTES_UPDATE:
+                player.notifyOnBufferingBytesUpdate(msg.arg1);
                 return;
 
             case MEDIA_SEEK_COMPLETE:
